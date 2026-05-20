@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - Cybercrime Prediction System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="sidebar">
+        <a href="{{ url_for('dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="{{ url_for('prediction') }}"><i class="fas fa-search"></i> Prediction</a>
+        <a href="{{ url_for('about') }}" class="active"><i class="fas fa-info-circle"></i> About</a>
+    </div>
+    
+    <div class="content">
+        <div class="about-container">
+            <div class="about-section">
+                <h2><i class="fas fa-shield-alt"></i> About the Cybercrime Prediction System</h2>
+                <p>This advanced system is designed to predict and analyse various types of cybercrimes in real-time, including DDoS, Ransomware and Brute Force attacks. Utilising state-of-the-art machine learning models, it provides actionable insights to help secure your network infrastructure.</p>
+            </div>
+            
+            <div class="features-section">
+                <h3><i class="fas fa-star"></i> Key Features</h3>
+                <ul>
+                    <li><i class="fas fa-check-circle"></i> Real-time crime detection and prediction</li>
+                    <li><i class="fas fa-check-circle"></i> Comprehensive crime type analysis</li>
+                    <li><i class="fas fa-check-circle"></i> Detailed security recommendations</li>
+                    <li><i class="fas fa-check-circle"></i> Multiple input methods (manual, CSV, real-time)</li>
+                    <li><i class="fas fa-check-circle"></i> Intuitive visual dashboard</li>
+                    <li><i class="fas fa-check-circle"></i> Export capabilities for further analysis</li>
+                </ul>
+            </div>
+            
+            <div class="contact-section">
+                <h3><i class="fas fa-envelope"></i> Contact Information</h3>
+                <p>For support, inquiries, or to report issues, please contact us:</p>
+                
+                <div class="contact-methods">
+                    <div class="contact-card">
+                        <i class="fas fa-envelope"></i>
+                        <h4>Email</h4>
+                        <a href="mailto:marufugideon@gmail.com">marufugideong@gmail.com</a>
+                    </div>
+                    
+                    <div class="contact-card">
+                        <i class="fas fa-phone"></i>
+                        <h4>Phone</h4>
+                        <a href="tel:+263786867177">+263 78 686 7177</a>
+                    </div>
+                    
+                    <div class="contact-card">
+                        <i class="fab fa-whatsapp"></i>
+                        <h4>WhatsApp</h4>
+                        <a href="https://wa.me/263786867177" target="_blank">Chat with us</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="social-section">
+                <h3><i class="fas fa-share-alt"></i> Connect With Us</h3>
+                <div class="social-links">
+                    <a href="#" class="social-link facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-link twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="social-link linkedin"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="https://wa.me/263786867177" class="social-link whatsapp" target="_blank"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

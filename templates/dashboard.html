@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cybercrimes Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.0.4/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.2.0/dist/chartjs-adapter-luxon.min.js"></script>
+</head>
+<body>
+    <div class="sidebar">
+        <a href="{{ url_for('dashboard') }}" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="{{ url_for('prediction') }}"><i class="fas fa-search"></i> Prediction</a>
+        <a href="{{ url_for('about') }}"><i class="fas fa-info-circle"></i> About</a>
+    </div>
+
+    <div class="main-content">
+        <div class="header-section">
+            <h2><i class="fas fa-shield-alt"></i> Cybercrimes Dashboard</h2>
+            <div class="description">
+                <p>Real-time security monitoring and crime analysis</p>
+            </div>
+        </div>
+
+        <div class="stats-section">
+            <div class="stat-card total">
+                <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                <div class="stat-content">
+                    <h3>Total Predictions</h3>
+                    <p class="stat-value" id="totalPredictions">{{ counts.total }}</p>
+                </div>
+            </div>
+            <div class="stat-card normal">
+                <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                <div class="stat-content">
+                    <h3>Normal Traffic</h3>
+                    <p class="stat-value" id="normalCount">{{ counts.normal }}</p>
+                </div>
+            </div>
+            <div class="stat-card attack">
+                <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="stat-content">
+                    <h3>Crime Traffic</h3>
+                    <p class="stat-value" id="attackCount">{{ counts.attacks }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h3><i class="fas fa-chart-line"></i> Crime Trend Analysis</h3>
+            <canvas id="trendChart"></canvas>
+        </div>
+
+        <div class="breakdown-section">
+            <h3><i class="fas fa-bug"></i> Crime Distribution</h3>
+            <div class="attack-cards">
+                <div class="attack-card ddos">
+                    <div class="attack-icon"><i class="fas fa-network-wired"></i></div>
+                    <div class="attack-info">
+                        <h4>DDoS</h4>
+                        <p class="attack-count" id="ddosCount">{{ counts.ddos }}</p>
+                    </div>
+                </div>
+                <div class="attack-card ransomware">
+                    <div class="attack-icon"><i class="fas fa-lock"></i></div>
+                    <div class="attack-info">
+                        <h4>Ransomware</h4>
+                        <p class="attack-count" id="ransomwareCount">{{ counts.ransomware }}</p>
+                    </div>
+                </div>
+                <div class="attack-card brute">
+                    <div class="attack-icon"><i class="fas fa-key"></i></div>
+                    <div class="attack-info">
+                        <h4>Brute Force</h4>
+                        <p class="attack-count" id="bruteForceCount">{{ counts.brute_force }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="activity-section">
+            <h3><i class="fas fa-history"></i> Recent Security Events</h3>
+            <div class="activity-list" id="activityList">
+                {% if not recent %}
+                <div class="empty-state">
+                    <i class="fas fa-bell-slash"></i>
+                    <p>No security events detected</p>
+                </div>
+                {% else %}
+                    {% for item in recent %}
+                    <div class="activity-item {{ 'attack' if item.is_attack else 'normal' }}">
+                        <div class="activity-icon">
+                            <i class="fas {{ 'fa-network-wired' if item.type == 'DDoS' 
+                                else 'fa-lock' if item.type == 'Ransomware' 
+                                else 'fa-key' if item.type == 'Brute Force' 
+                                else 'fa-check-circle' }}"></i>
+                        </div>
+                        <div class="activity-details">
+                            <p class="activity-type">{{ item.type }}</p>
+                            <p class="activity-time">{{ item.timestamp|format_time }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Trend Chart
+        let trendChart;
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        
+        function initChart() {
+            trendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: {{ attack_days|tojson }},
+                    datasets: [{
+                        label: 'Attack Count',
+                        data: {{ attack_counts|tojson }},
+                        borderColor: '#ff6384',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                parser: 'yyyy-MM-dd',
+                                unit: 'day',
+                                displayFormats: { day: 'MMM d' }
+                            },
+                            title: { display: true, text: 'Date' }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Number of Attacks' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Real-time Updates
+        const eventSource = new EventSource('/dashboard_updates');
+        eventSource.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            
+            // Update counters
+            document.getElementById('totalPredictions').textContent = data.counts.total;
+            document.getElementById('normalCount').textContent = data.counts.normal;
+            document.getElementById('attackCount').textContent = data.counts.attacks;
+            document.getElementById('ddosCount').textContent = data.counts.ddos;
+            document.getElementById('ransomwareCount').textContent = data.counts.ransomware;
+            document.getElementById('bruteForceCount').textContent = data.counts.brute_force;
+
+            // Update trend chart
+            if(data.daily_attacks) {
+                trendChart.data.labels = data.daily_attacks.days;
+                trendChart.data.datasets[0].data = data.daily_attacks.counts;
+                trendChart.update();
+            }
+
+            // Update activity list
+            const activityList = document.getElementById('activityList');
+            if(data.recent && data.recent.length > 0) {
+                activityList.innerHTML = data.recent.map(item => `
+                    <div class="activity-item ${item.is_attack ? 'attack' : 'normal'}">
+                        <div class="activity-icon">
+                            <i class="fas ${getAttackIcon(item.type)}"></i>
+                        </div>
+                        <div class="activity-details">
+                            <p class="activity-type">${item.type}</p>
+                            <p class="activity-time">${luxon.DateTime.fromISO(item.timestamp).toLocaleString(luxon.DateTime.DATETIME_MED)}</p>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        };
+
+        function getAttackIcon(type) {
+            const icons = {
+                'DDoS': 'fa-network-wired',
+                'Ransomware': 'fa-lock',
+                'Brute Force': 'fa-key',
+                'Normal': 'fa-check-circle'
+            };
+            return icons[type] || 'fa-exclamation-triangle';
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', initChart);
+    </script>
+</body>
+</html>

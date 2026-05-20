@@ -1,0 +1,14 @@
+env/
+instance/
+venv/
+__pycache__/
+*.pyc
+.env
+*.keras
+*.pkl
+.pkl
+*.csv
+.csv
+.ipynb_checkpoints/
+*.ipynb
+.ipynb

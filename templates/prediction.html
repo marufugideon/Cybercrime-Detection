@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cybercrime Prediction</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="sidebar">
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('prediction') }}" class="active">Prediction</a>
+        <a href="{{ url_for('about') }}">About</a>
+    </div>
+    
+    <div class="main-content">
+        <div class="header-section">
+            <h2>Cybercrime Prediction</h2>
+            <div class="description">
+                <p>Enter network traffic parameters to predict potential crimes:</p>
+            </div>
+            <div class="input-selector">
+                <label for="inputMethod">Input Method:</label>
+                <select id="inputMethod" name="inputMethod">
+                    <option value="textboxes" selected>Manual Input</option>
+                    <option value="import">Import CSV</option>
+                    <option value="real-time">Real-Time</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="messages">
+            {% if errors %}
+            <div class="error-container">
+                <h3>Validation Errors:</h3>
+                <ul>
+                    {% for error in errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if error %}
+            <div class="error-message">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            {% if success %}
+            <div class="success-message">
+                {{ success }}
+            </div>
+            {% endif %}
+        </div>
+
+        <div id="inputOptions">
+            <!-- Manual Input Section -->
+            <div id="textboxInputs">
+                <form id="manualPredictionForm" class="prediction-form">
+                    <input type="hidden" name="inputMethod" value="textboxes">
+                    
+                    <div class="form-columns">
+                        <!-- Column 1 -->
+                        <div class="form-column">
+                            <div class="input-group">
+                                <label for="source_ip">Source IP</label>
+                                <input type="text" id="source_ip" name="source_ip" 
+                                       value="{{ form_data.source_ip if form_data else '' }}"
+                                       placeholder="e.g., 192.168.1.1" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="destination_ip">Destination IP</label>
+                                <input type="text" id="destination_ip" name="destination_ip" 
+                                       value="{{ form_data.destination_ip if form_data else '' }}"
+                                       placeholder="e.g., 10.0.0.1" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="protocol">Protocol</label>
+                                <input type="text" id="protocol" name="protocol" 
+                                       value="{{ form_data.protocol if form_data else '' }}"
+                                       placeholder="ICMP(0), UDP(1), TCP(2)" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="packet_length">Packet Length</label>
+                                <input type="text" id="packet_length" name="packet_length" 
+                                       value="{{ form_data.packet_length if form_data else '' }}"
+                                       placeholder="Number (e.g., 1500)" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="duration">Duration</label>
+                                <input type="text" id="duration" name="duration" 
+                                       value="{{ form_data.duration if form_data else '' }}"
+                                       placeholder="Number in seconds (e.g., 10)" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Column 2 -->
+                        <div class="form-column">
+                            <div class="input-group">
+                                <label for="source_port">Source Port</label>
+                                <input type="text" id="source_port" name="source_port" 
+                                       value="{{ form_data.source_port if form_data else '' }}"
+                                       placeholder="0-65535 (e.g., 443 for HTTPS)" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="destination_port">Destination Port</label>
+                                <input type="text" id="destination_port" name="destination_port" 
+                                       value="{{ form_data.destination_port if form_data else '' }}"
+                                       placeholder="0-65535 (e.g., 80 for HTTP)" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="bytes_sent">Bytes Sent</label>
+                                <input type="text" id="bytes_sent" name="bytes_sent" 
+                                       value="{{ form_data.bytes_sent if form_data else '' }}"
+                                       placeholder="Number (e.g., 1500)" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="bytes_received">Bytes Received</label>
+                                <input type="text" id="bytes_received" name="bytes_received" 
+                                       value="{{ form_data.bytes_received if form_data else '' }}"
+                                       placeholder="Number (e.g., 1500)" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="flags">Flags</label>
+                                <input type="text" id="flags" name="flags" 
+                                       value="{{ form_data.flags if form_data else '' }}"
+                                       placeholder="SYN(0), ACK(1), FIN(2), PSH(3)" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Column 3 -->
+                        <div class="form-column">
+                            <div class="input-group">
+                                <label for="flow_packets_per_second">Flow Packets/s</label>
+                                <input type="text" id="flow_packets_per_second" name="flow_packets_per_second" 
+                                       value="{{ form_data.flow_packets_per_second if form_data else '' }}"
+                                       placeholder="Number (e.g., 1000)" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="flow_bytes_per_second">Flow Bytes/s</label>
+                                <input type="text" id="flow_bytes_per_second" name="flow_bytes_per_second" 
+                                       value="{{ form_data.flow_bytes_per_second if form_data else '' }}"
+                                       placeholder="Number (e.g., 1000000)" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="avg_packet_size">Avg Packet Size</label>
+                                <input type="text" id="avg_packet_size" name="avg_packet_size" 
+                                       value="{{ form_data.avg_packet_size if form_data else '' }}"
+                                       placeholder="Number in bytes (e.g., 500)" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="total_fwd_packets">Total Fwd Packets</label>
+                                <input type="text" id="total_fwd_packets" name="total_fwd_packets" 
+                                       value="{{ form_data.total_fwd_packets if form_data else '' }}"
+                                       placeholder="Number (e.g., 100)" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="total_bwd_packets">Total Bwd Packets</label>
+                                <input type="text" id="total_bwd_packets" name="total_bwd_packets" 
+                                       value="{{ form_data.total_bwd_packets if form_data else '' }}"
+                                       placeholder="Number (e.g., 50)" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Column 4 -->
+                        <div class="form-column">
+                            <div class="input-group">
+                                <label for="fwd_header_length">Fwd Header Length</label>
+                                <input type="text" id="fwd_header_length" name="fwd_header_length" 
+                                       value="{{ form_data.fwd_header_length if form_data else '' }}"
+                                       placeholder="Number (e.g., 20)" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="bwd_header_length">Bwd Header Length</label>
+                                <input type="text" id="bwd_header_length" name="bwd_header_length" 
+                                       value="{{ form_data.bwd_header_length if form_data else '' }}"
+                                       placeholder="Number (e.g., 20)" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="sub_flow_fwd_bytes">Sub Flow Fwd Bytes</label>
+                                <input type="text" id="sub_flow_fwd_bytes" name="sub_flow_fwd_bytes" 
+                                       value="{{ form_data.sub_flow_fwd_bytes if form_data else '' }}"
+                                       placeholder="Number (e.g., 1000)" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="sub_flow_bwd_bytes">Sub Flow Bwd Bytes</label>
+                                <input type="text" id="sub_flow_bwd_bytes" name="sub_flow_bwd_bytes" 
+                                       value="{{ form_data.sub_flow_bwd_bytes if form_data else '' }}"
+                                       placeholder="Number (e.g., 500)" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-footer">
+                        <button type="submit" id="predict-btn">PREDICT</button>
+                        <div class="prediction-result" style="display: none;"></div>
+                    </div>
+
+                    <div class="recommendation-box" style="display: none;"></div>
+                </form>
+            </div>
+            
+            <!-- CSV Import Section -->
+            <div id="importInput" style="display:none;">
+                <div class="csv-upload-form">
+                    <div class="upload-section">
+                        <input type="file" id="csv_file" accept=".csv">
+                        <button id="previewBtn">Preview CSV</button>
+                    </div>
+                    
+                    <div id="previewSection" style="display:none;">
+                        <h3>CSV Preview</h3>
+                        <div class="table-container">
+                            <table id="previewTable">
+                                <thead>
+                                    <tr id="previewHeader"></tr>
+                                </thead>
+                                <tbody id="previewBody"></tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="column-mapping">
+                            <h4>Column Mapping</h4>
+                            <table id="mappingTable">
+                                <thead>
+                                    <tr>
+                                        <th>CSV Column</th>
+                                        <th>Maps To</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mappingBody"></tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="form-footer">
+                            <button id="processBtn">Process and Predict</button>
+                        </div>
+                    </div>
+                    
+                    <div id="resultsSection" style="display:none;">
+                        <h3>Prediction Results</h3>
+                        <div class="stats-summary">
+                            <div class="stat-card">
+                                <h5>Total Records</h5>
+                                <p id="totalRecords">0</p>
+                            </div>
+                            <div class="stat-card normal">
+                                <h5>Normal Traffic</h5>
+                                <p id="normalCount">0</p>
+                            </div>
+                            <div class="stat-card attack">
+                                <h5>Crime Traffic</h5>
+                                <p id="attackCount">0</p>
+                            </div>
+                        </div>
+                        
+                        <div class="attack-breakdown">
+                            <h4>Crime Types Detected</h4>
+                            <ul id="attackTypes"></ul>
+                        </div>
+                        
+                        <div class="sample-results">
+                            <h4>Sample Predictions</h4>
+                            <div class="table-container">
+                                <table id="resultsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Prediction</th>
+                                            <th>Recommendation</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="resultsBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="export-options">
+                            <button id="exportFullBtn">Download Full Results</button>
+                            <button id="exportAttacksBtn">Download Only Attacks</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Real-Time Section -->
+            <div id="realTimeInput" style="display:none;">
+                <div class="realtime-container">
+                    <h3>Real-Time Network Traffic Analysis</h3>
+                    <div class="realtime-controls">
+                        <button id="startRealtimeBtn" class="btn btn-primary">Start Monitoring</button>
+                        <button id="stopRealtimeBtn" class="btn btn-danger" disabled>Stop Monitoring</button>
+                    </div>
+                    
+                    <div class="realtime-stats">
+                        <div class="stat-card">
+                            <h5>Packets Analysed</h5>
+                            <p id="packetsCount">0</p>
+                        </div>
+                        <div class="stat-card normal">
+                            <h5>Normal Traffic</h5>
+                            <p id="realtimeNormalCount">0</p>
+                        </div>
+                        <div class="stat-card attack">
+                            <h5>Crime Traffic</h5>
+                            <p id="realtimeAttackCount">0</p>
+                        </div>
+                    </div>
+                    
+                    <div class="realtime-alerts">
+                        <h4>Security Alerts</h4>
+                        <div class="alerts-container" id="alertsContainer">
+                            <div class="alert-placeholder">
+                                <p>No security alerts detected yet</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="realtime-charts">
+                        <div class="chart-container">
+                            <h5>Traffic Distribution</h5>
+                            <canvas id="trafficChart" width="400" height="200"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h5>Crime Types</h5>
+                            <canvas id="attackChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
