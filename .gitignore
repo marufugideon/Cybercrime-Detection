@@ -1,4 +1,5 @@
 env/
+myenv/
 instance/
 venv/
 __pycache__/
